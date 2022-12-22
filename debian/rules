@@ -1,0 +1,19 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+export PYBUILD_NAME=numpydoc
+
+ifneq (,$(findstring nocheck,$(DEB_BUILD_PROFILES)))
+export PYBUILD_DISABLE=test
+endif
+
+override_dh_auto_install:
+	find .pybuild -name '.coverage' -delete
+	find .pybuild -name 'junit-results.xml' -delete
+	dh_auto_install
+
+%:
+	dh $@ --with python3 --buildsystem=pybuild

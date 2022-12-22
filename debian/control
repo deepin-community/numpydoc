@@ -1,0 +1,32 @@
+Source: numpydoc
+Maintainer: Debian Python Modules Team <python-modules-team@lists.alioth.debian.org>
+Uploaders: Denis Laxalde <denis@laxalde.org>
+Section: python
+Priority: optional
+Build-Depends: debhelper-compat (= 12),
+               dh-python,
+               dpkg-dev (>= 1.17.14),
+               python3-all (>= 3.4),
+               python3-setuptools,
+               python3-jinja2 <!nocheck>,
+               python3-matplotlib <!nocheck>,
+               python3-pytest <!nocheck>,
+               python3-pytest-cov <!nocheck>,
+               python3-sphinx <!nocheck>,
+               python3-doc <!nodoc>,
+Rules-Requires-Root: no
+Standards-Version: 4.5.0
+Vcs-Browser: https://salsa.debian.org/python-team/modules/numpydoc
+Vcs-Git: https://salsa.debian.org/python-team/modules/numpydoc.git
+Homepage: https://github.com/numpy/numpydoc
+
+Package: python3-numpydoc
+Architecture: all
+Depends: ${misc:Depends},
+         ${python3:Depends}
+Description: Sphinx extension to support docstrings in Numpy format -- Python3
+ This package defines several extensions for the Sphinx documentation
+ system, shipped in the numpydoc Python package. In particular, these provide
+ support for the Numpy docstring format in Sphinx.
+ .
+ This package provides the Python 3 version.

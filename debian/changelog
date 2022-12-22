@@ -1,0 +1,132 @@
+numpydoc (1.1.0-3) unstable; urgency=medium
+
+  * Team upload
+
+  * Remove .coverage and junit-results.xml from build result (Closes: #965362)
+
+ -- Christian Kastner <ckk@debian.org>  Thu, 27 Aug 2020 00:18:59 +0200
+
+numpydoc (1.1.0-2) unstable; urgency=medium
+
+  * Team upload
+
+  * Add python3-sphinx, python3-doc to d/tests/control
+    Resolves a debci regression.
+  * Add Rules-Requires-Root: no
+
+ -- Christian Kastner <ckk@debian.org>  Mon, 20 Jul 2020 09:59:46 +0200
+
+numpydoc (1.1.0-1) unstable; urgency=medium
+
+  * Team upload
+
+  [ Debian Janitor ]
+  * Bump debhelper from old 10 to 12.
+  * Set upstream metadata fields: Bug-Database, Bug-Submit.
+
+  [ Christian Kastner ]
+  * New upstream version 1.1.0
+  * Switch from nose to pytest
+  * Add Use-system-inventory.patch
+  * Add python3-doc to Build-Depends
+  * Add lintian overrides for source-is-missing
+  * Bump Standards-Version to 4.5.0 (no changes needed)
+  * Add Repository, -Browse to upstream metadata
+
+ -- Christian Kastner <ckk@debian.org>  Sun, 19 Jul 2020 11:15:47 +0200
+
+numpydoc (0.7.0-2) unstable; urgency=medium
+
+  [ Ondřej Nový ]
+  * d/control: Set Vcs-* to salsa.debian.org
+  * d/control: Remove ancient X-Python-Version field
+  * d/control: Remove ancient X-Python3-Version field
+  * Use debhelper-compat instead of debian/compat.
+
+  [ Sandro Tosi ]
+  * Drop python2 support; Closes: #937168
+
+ -- Sandro Tosi <morph@debian.org>  Sat, 04 Jan 2020 22:43:34 -0500
+
+numpydoc (0.7.0-1) unstable; urgency=medium
+
+  * Team upload
+
+  [ Ghislain Antony Vaillant ]
+  * Upgrade watch file to version 4
+  * Switch from git-dpm to gbp
+  * New upstream version 0.7.0
+  * Add new build dependency on jinja2
+  * Drop explicit dependency on Sphinx
+  * Drop matplotlib from Suggests
+  * No more repack required
+  * Update copyright information
+  * Use secure Source URI in copyright
+  * Bump debhelper version to 10, no changes required
+  * Bump standards version to 4.0.0, no changes required
+  * Normalize the Vcs-Browser URI
+  * Run DEP-8 tests for all Python versions
+  * Add support for the nocheck build profile
+
+ -- Ghislain Antony Vaillant <ghisvail@gmail.com>  Wed, 12 Jul 2017 19:12:11 +0100
+
+numpydoc (0.6.0+ds1-1) unstable; urgency=medium
+
+  * Team upload
+
+  [ Ondřej Nový ]
+  * Fixed VCS URL (https)
+
+  [ Ghislain Antony Vaillant ]
+  * Filter the vendored copy of sphinx.ext.linkcode from the upstream tarball
+  * New upstream release
+  * Update copyright file
+  * Bump versioned depends on Python to 2.7 and 3.4
+  * Bump standards version to 3.9.8, no changes required
+  * Add autopkgtest testsuite for the packaging
+  * Rearrange copyright paragraphs to fix Lintian warnings
+  * Add missing build dependency on dh-python
+  * Improve description of the Python 2 binary package
+  * cme fix dpkg-control:
+    - Drop versioned dependency on python-all
+    - Drop versioned dependency on python[,3]-sphinx
+    - Wrap and sort
+  * cme fix dpkg-copyright: use HTTPS URI in Format field
+
+ -- Ghislain Antony Vaillant <ghisvail@gmail.com>  Thu, 29 Dec 2016 13:46:10 +0000
+
+numpydoc (0.5-2) unstable; urgency=medium
+
+  * Update debian/copyright to mention all source files and license short
+    names; switch to BSD license for the Debian packaging to be consistent
+    with upstream (Closes: #803188).
+
+ -- Denis Laxalde <denis@laxalde.org>  Wed, 28 Oct 2015 10:33:01 -0400
+
+numpydoc (0.5-1) unstable; urgency=medium
+
+  * Team upload.
+
+  [ Jakub Wilk ]
+  * Use canonical URIs for Vcs-* fields.
+
+  [ Denis Laxalde ]
+  * New upstream release (Closes: #801947).
+  * Build python3 package as it's now supported upstream
+  * debian/control:
+    + Build-Depends on python-setuptools
+    + Update Homepage (numpydoc is not anymore within numpy's source tree)
+    + Update Standards-Version (no change needed)
+  * debian/rules: use pybuild.
+  * Drop clean-setup patch (included upstream)
+
+  [ Barry Warsaw ]
+  * debian/watch: Use the pypi.debian.net redirector.
+
+ -- Barry Warsaw <barry@debian.org>  Tue, 27 Oct 2015 15:53:53 -0400
+
+numpydoc (0.4-1) unstable; urgency=low
+
+  * Initial release (Closes: #559916)
+
+ -- Denis Laxalde <denis@laxalde.org>  Wed, 06 Jun 2012 15:20:20 -0400
