@@ -6,10 +6,6 @@
 
 export PYBUILD_NAME=numpydoc
 
-ifneq (,$(findstring nocheck,$(DEB_BUILD_PROFILES)))
-export PYBUILD_DISABLE=test
-endif
-
 override_dh_auto_install:
 	find .pybuild -name '.coverage' -delete
 	find .pybuild -name 'junit-results.xml' -delete
@@ -17,3 +13,8 @@ override_dh_auto_install:
 
 %:
 	dh $@ --with python3 --buildsystem=pybuild
+
+clean::
+	dh_clean
+	-rm -rf __pycache__ build .pybuild annexremote.egg-info dist
+	-find . -name __pycache__ -type d -exec rm -rf {} \;

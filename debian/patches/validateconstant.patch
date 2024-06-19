@@ -1,0 +1,18 @@
+From: Chiara Marmo <marmochiaskl@gmail.com>
+Subject: Fix DeprecationWarning for python 3.12
+
+This is the upstream fix by Eric Larson, included in 1.7
+--- a/numpydoc/validate.py
++++ b/numpydoc/validate.py
+@@ -520,9 +520,9 @@
+         if tree:
+             returns = get_returns_not_on_nested_functions(tree[0])
+             return_values = [r.value for r in returns]
+-            # Replace NameConstant nodes valued None for None.
++            # Replace Constant nodes valued None for None.
+             for i, v in enumerate(return_values):
+-                if isinstance(v, ast.NameConstant) and v.value is None:
++                if isinstance(v, ast.Constant) and v.value is None:
+                     return_values[i] = None
+             return any(return_values)
+         else:

@@ -1,3 +1,5 @@
+:html_theme.sidebar_secondary.remove: true
+
 =====================================
 numpydoc -- Numpy's Sphinx extensions
 =====================================
@@ -15,14 +17,11 @@ Sphinx, and adds the code description directives ``np:function``,
 - PyPI: https://pypi.python.org/pypi/numpydoc/
 
 
-Documentation
-=============
-
 .. toctree::
-    :maxdepth: 2
+    :hidden:
 
     install
-    release_notes
     format
-    example
     validation
+    release_notes
+    example

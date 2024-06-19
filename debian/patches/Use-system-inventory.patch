@@ -8,16 +8,14 @@ we cannot download it.
  numpydoc/tests/tinybuild/conf.py | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/numpydoc/tests/tinybuild/conf.py b/numpydoc/tests/tinybuild/conf.py
-index 8b16cdd..a8249a1 100644
 --- a/numpydoc/tests/tinybuild/conf.py
 +++ b/numpydoc/tests/tinybuild/conf.py
-@@ -16,7 +16,7 @@ source_suffix = '.rst'
- master_doc = 'index'
- exclude_patterns = ['_build']
+@@ -18,7 +18,7 @@
+ master_doc = "index"  # NOTE: will be changed to `root_doc` in sphinx 4
+ exclude_patterns = ["_build"]
  intersphinx_mapping = {
--    'python': ('https://docs.python.org/3', None),
-+    'python': ('https://docs.python.org/3', '/usr/share/doc/python3/html/objects.inv'),
+-    "python": ("https://docs.python.org/3", None),
++    "python": ("https://docs.python.org/3", "/usr/share/doc/python3/html/objects.inv"),
  }
  nitpicky = True
- highlight_language = 'python3'
+ highlight_language = "python3"

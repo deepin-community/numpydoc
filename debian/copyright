@@ -3,19 +3,12 @@ Upstream-Name: numpydoc
 Source: https://pypi.python.org/pypi/numpydoc
 
 Files: *
-Copyright: 2008 Pauli Virtanen and others
-License: BSD-3-Clause
+Copyright: 2008-2022 Stefan van der Walt <stefan@mentat.za.net>, Pauli Virtanen <pav@iki.fi>
+License: BSD-2-Clause
 
 Files: debian/*
 Copyright: 2012 Denis Laxalde <denis@laxalde.org>
 License: BSD-3-Clause
-
-Files: numpydoc/docscrape.py
- numpydoc/docscrape_sphinx.py
- numpydoc/numpydoc.py
-Copyright: 2008 Stefan van der Walt <stefan@mentat.za.net>
-           2008 Pauli Virtanen <pav@iki.fi>
-License: BSD-2-Clause
 
 License: BSD-2-Clause
  Redistribution and use in source and binary forms, with or without
