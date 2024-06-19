@@ -1,9 +1,88 @@
 import pytest
-import numpydoc.validate
+import sys
+import warnings
+from functools import cached_property
+from inspect import getsourcelines, getsourcefile
+
+from numpydoc import validate
 import numpydoc.tests
 
 
-validate_one = numpydoc.validate.validate
+validate_one = validate.validate
+
+ALL_CHECKS = set(validate.ERROR_MSGS.keys())
+
+
+@pytest.mark.parametrize(
+    ["checks", "expected"],
+    [
+        [{"all"}, ALL_CHECKS],
+        [set(), set()],
+        [{"EX01"}, {"EX01"}],
+        [{"EX01", "SA01"}, {"EX01", "SA01"}],
+        [{"all", "EX01", "SA01"}, ALL_CHECKS - {"EX01", "SA01"}],
+        [{"all", "PR01"}, ALL_CHECKS - {"PR01"}],
+    ],
+)
+def test_utils_get_validation_checks(checks, expected):
+    """Ensure check selection is working."""
+    assert validate.get_validation_checks(checks) == expected
+
+
+@pytest.mark.parametrize(
+    "checks",
+    [
+        {"every"},
+        {None},
+        {"SM10"},
+        {"EX01", "SM10"},
+    ],
+)
+def test_get_validation_checks_validity(checks):
+    """Ensure that invalid checks are flagged."""
+    with pytest.raises(ValueError, match="Unrecognized validation code"):
+        _ = validate.get_validation_checks(checks)
+
+
+class _DummyList(list):
+    """Dummy list class to test validation."""
+
+
+def test_no_file():
+    """Test that validation can be done on functions made on the fly."""
+    # Just a smoke test for now, <list> will have a None filename
+    validate.validate("numpydoc.tests.test_validate._DummyList.clear")
+
+
+@pytest.mark.parametrize(
+    ["file_contents", "expected"],
+    [
+        ["class MyClass:\n    pass", {}],
+        ["class MyClass:  # numpydoc ignore=EX01\n    pass", {1: ["EX01"]}],
+        [
+            "class MyClass:  # numpydoc ignore= EX01,SA01\n    pass",
+            {1: ["EX01", "SA01"]},
+        ],
+        [
+            "class MyClass:\n    def my_method():  # numpydoc ignore:EX01\n        pass",
+            {2: ["EX01"]},
+        ],
+        [
+            "class MyClass:\n    def my_method():  # numpydoc ignore: EX01,PR01\n        pass",
+            {2: ["EX01", "PR01"]},
+        ],
+        [
+            "class MyClass:  # numpydoc ignore=GL08\n    def my_method():  # numpydoc ignore:EX01,PR01\n        pass",
+            {1: ["GL08"], 2: ["EX01", "PR01"]},
+        ],
+    ],
+)
+def test_extract_ignore_validation_comments(tmp_path, file_contents, expected):
+    """Test that extraction of validation ignore comments is working."""
+    filepath = tmp_path / "ignore_comments.py"
+    with open(filepath, "w") as file:
+        file.write(file_contents)
+    assert validate.extract_ignore_validation_comments(filepath) == expected
 
 
 class GoodDocStrings:
@@ -21,6 +100,7 @@ class GoodDocStrings:
     --------
     >>> result = 1 + 1
     """
+
     def one_liner(self):
         """Allow one liner docstrings (including quotes)."""
         # This should fail, but not because of the position of the quotes
@@ -58,7 +138,7 @@ class GoodDocStrings:
 
     def swap(self, arr, i, j, *args, **kwargs):
         """
-        Swap two indicies on an array.
+        Swap two indices on an array.
 
         The extended summary can be multiple paragraphs, but just one
         is enough to pass the validation.
@@ -247,7 +327,7 @@ class GoodDocStrings:
         """
         return 1
 
-    def contains(self, pat, case=True, na=float('NaN')):
+    def contains(self, pat, case=True, na=float("NaN")):
         """
         Return whether each value contains `pat`.
 
@@ -384,6 +464,27 @@ class GoodDocStrings:
         else:
             return None
 
+    def warnings(self):
+        """
+        Do one thing.
+
+        Sometimes, this function does other things.
+
+        Warnings
+        --------
+        This function may produce side effects when some condition
+        is met.
+
+        See Also
+        --------
+        related : Something related.
+
+        Examples
+        --------
+        >>> result = 1 + 1
+        """
+        pass
+
     def multiple_variables_on_one_line(self, matrix, a, b, i, j):
         """
         Swap two values in a matrix.
@@ -396,9 +497,116 @@ class GoodDocStrings:
         matrix : list of list
             A double list that represents a matrix.
         a, b : int
-            The indicies of the first value.
+            The indices of the first value.
         i, j : int
-            The indicies of the second value.
+            The indices of the second value.
+
+        See Also
+        --------
+        related : Something related.
+
+        Examples
+        --------
+        >>> result = 1 + 1
+        """
+        pass
+
+    def other_parameters(self, param1, param2):
+        """
+        Ensure "Other Parameters" are recognized.
+
+        The second parameter is used infrequently, so it is put in the
+        "Other Parameters" section.
+
+        Parameters
+        ----------
+        param1 : bool
+            Description of commonly used parameter.
+
+        Other Parameters
+        ----------------
+        param2 : str
+            Description of infrequently used parameter.
+
+        See Also
+        --------
+        related : Something related.
+
+        Examples
+        --------
+        >>> result = 1 + 1
+        """
+        pass
+
+    def valid_options_in_parameter_description_sets(self, bar):
+        """
+        Ensure a PR06 error is not raised when type is member of a set.
+
+        Literal keywords like 'integer' are valid when specified in a set of
+        valid options for a keyword parameter.
+
+        Parameters
+        ----------
+        bar : {'integer', 'boolean'}
+            The literal values of 'integer' and 'boolean' are part of an
+            options set and thus should not be subject to PR06 warnings.
+
+        See Also
+        --------
+        related : Something related.
+
+        Examples
+        --------
+        >>> result = 1 + 1
+        """
+
+    def parameters_with_trailing_underscores(self, str_):
+        r"""
+        Ensure PR01 and PR02 errors are not raised with trailing underscores.
+
+        Parameters with trailing underscores need to be escaped to render
+        properly in the documentation since trailing underscores are used to
+        create links. Doing so without also handling the change in the validation
+        logic makes it impossible to both pass validation and render correctly.
+
+        Parameters
+        ----------
+        str\_ : str
+           Some text.
+
+        See Also
+        --------
+        related : Something related.
+
+        Examples
+        --------
+        >>> result = 1 + 1
+        """
+        pass
+
+    def parameter_with_wrong_types_as_substrings(self, a, b, c, d, e, f):
+        r"""
+        Ensure PR06 doesn't fail when non-preferable types are substrings.
+
+        While PR06 checks for parameter types which contain non-preferable type
+        names like integer (int), string (str), and boolean (bool), PR06 should
+        not fail if those types are used only as susbtrings in, for example,
+        custom type names.
+
+        Parameters
+        ----------
+        a : Myint
+           Some text.
+        b : intClass
+           Some text.
+        c : Mystring
+           Some text.
+        d : stringClass
+           Some text.
+        e : Mybool
+           Some text.
+        f : boolClass
+           Some text.
 
         See Also
         --------
@@ -412,11 +620,9 @@ class GoodDocStrings:
 
 
 class BadGenericDocStrings:
-    """Everything here has a bad docstring
-    """
+    """Everything here has a bad docstring"""
 
     def func(self):
-
         """Some function.
 
         With several mistakes in the docstring.
@@ -586,6 +792,23 @@ class BadGenericDocStrings:
         pass
 
 
+class WarnGenericFormat:
+    """
+    Those contains things that _may_ be incorrect formatting.
+    """
+
+    def too_short_header_underline(self, a, b):
+        """
+        The header line is too short.
+
+        Parameters
+        ------
+        a, b : int
+            Foo bar baz.
+        """
+        pass
+
+
 class BadSummaries:
     def no_summary(self):
         """
@@ -648,6 +871,7 @@ class BadParameters:
     """
     Everything here has a problem with its Parameters section.
     """
+
     def no_type(self, value):
         """
         Lacks the type.
@@ -835,7 +1059,7 @@ class BadReturns:
 
     def no_description(self):
         """
-        Provides type but no descrption.
+        Provides type but no description.
 
         Returns
         -------
@@ -996,10 +1220,15 @@ class TestValidator:
         return base_path
 
     def test_one_liner(self, capsys):
-        result = validate_one(self._import_path(klass="GoodDocStrings", func='one_liner'))
+        result = validate_one(
+            self._import_path(klass="GoodDocStrings", func="one_liner")
+        )
         errors = " ".join(err[1] for err in result["errors"])
-        assert 'should start in the line immediately after the opening quotes' not in errors
-        assert 'should be placed in the line after the last text' not in errors
+        assert (
+            "should start in the line immediately after the opening quotes"
+            not in errors
+        )
+        assert "should be placed in the line after the last text" not in errors
 
     def test_good_class(self, capsys):
         errors = validate_one(self._import_path(klass="GoodDocStrings"))["errors"]
@@ -1023,6 +1252,11 @@ class TestValidator:
             "no_returns",
             "empty_returns",
             "multiple_variables_on_one_line",
+            "other_parameters",
+            "warnings",
+            "valid_options_in_parameter_description_sets",
+            "parameters_with_trailing_underscores",
+            "parameter_with_wrong_types_as_substrings",
         ],
     )
     def test_good_functions(self, capsys, func):
@@ -1036,6 +1270,19 @@ class TestValidator:
         errors = validate_one(self._import_path(klass="BadGenericDocStrings"))["errors"]
         assert isinstance(errors, list)
         assert errors
+
+    @pytest.mark.parametrize(
+        "func",
+        [
+            "too_short_header_underline",
+        ],
+    )
+    def test_bad_generic_functions(self, capsys, func):
+        with pytest.warns(UserWarning):
+            errors = validate_one(
+                self._import_path(klass="WarnGenericFormat", func=func)  # noqa:F821
+            )
+        assert "is too short" in w.msg
 
     @pytest.mark.parametrize(
         "func",
@@ -1115,8 +1362,10 @@ class TestValidator:
             (
                 "BadSummaries",
                 "wrong_line",
-                ("should start in the line immediately after the opening quotes",
-                 "should be placed in the line after the last text"),
+                (
+                    "should start in the line immediately after the opening quotes",
+                    "should be placed in the line after the last text",
+                ),
             ),
             ("BadSummaries", "no_punctuation", ("Summary does not end with a period",)),
             (
@@ -1274,20 +1523,63 @@ class TestValidator:
         ],
     )
     def test_bad_docstrings(self, capsys, klass, func, msgs):
-        with pytest.warns(None) as w:
+        with warnings.catch_warnings(record=True) as w:
             result = validate_one(self._import_path(klass=klass, func=func))
         if len(w):
-            assert all('Unknown section' in str(ww.message) for ww in w)
+            assert all("Unknown section" in str(ww.message) for ww in w)
         for msg in msgs:
             assert msg in " ".join(err[1] for err in result["errors"])
 
 
-class TestDocstringClass:
+def decorator(x):
+    """Test decorator."""
+    return x
+
+
+@decorator
+@decorator
+class DecoratorClass:
+    """
+    Class and methods with decorators.
+
+    * `DecoratorClass` has two decorators.
+    * `DecoratorClass.test_no_decorator` has no decorator.
+    * `DecoratorClass.test_property` has a `@property` decorator.
+    * `DecoratorClass.test_cached_property` has a `@cached_property` decorator.
+    * `DecoratorClass.test_three_decorators` has three decorators.
+
+    `Validator.source_file_def_line` should return the `def` or `class` line number, not
+    the line of the first decorator.
+    """
+
+    def test_no_decorator(self):
+        """Test method without decorators."""
+        pass
+
+    @property
+    def test_property(self):
+        """Test property method."""
+        pass
+
+    @cached_property
+    def test_cached_property(self):
+        """Test property method."""
+        pass
+
+    @decorator
+    @decorator
+    @decorator
+    def test_three_decorators(self):
+        """Test method with three decorators."""
+        pass
+
+
+class TestValidatorClass:
     @pytest.mark.parametrize("invalid_name", ["unknown_mod", "unknown_mod.MyClass"])
     def test_raises_for_invalid_module_name(self, invalid_name):
-        msg = 'No module can be imported from "{}"'.format(invalid_name)
+        msg = f'No module can be imported from "{invalid_name}"'
         with pytest.raises(ImportError, match=msg):
-            numpydoc.validate.Docstring(invalid_name)
+            numpydoc.validate.Validator._load_obj(invalid_name)
 
     @pytest.mark.parametrize(
         "invalid_name", ["datetime.BadClassName", "datetime.bad_method_name"]
@@ -1295,6 +1587,63 @@ class TestDocstringClass:
     def test_raises_for_invalid_attribute_name(self, invalid_name):
         name_components = invalid_name.split(".")
         obj_name, invalid_attr_name = name_components[-2], name_components[-1]
-        msg = "'{}' has no attribute '{}'".format(obj_name, invalid_attr_name)
+        msg = f"'{obj_name}' has no attribute '{invalid_attr_name}'"
         with pytest.raises(AttributeError, match=msg):
-            numpydoc.validate.Docstring(invalid_name)
+            numpydoc.validate.Validator._load_obj(invalid_name)
+
+    # inspect.getsourcelines does not return class decorators for Python 3.8. This was
+    # fixed starting with 3.9: https://github.com/python/cpython/issues/60060.
+    @pytest.mark.parametrize(
+        ["decorated_obj", "def_line"],
+        [
+            [
+                "numpydoc.tests.test_validate.DecoratorClass",
+                getsourcelines(DecoratorClass)[-1]
+                + (2 if sys.version_info.minor > 8 else 0),
+            ],
+            [
+                "numpydoc.tests.test_validate.DecoratorClass.test_no_decorator",
+                getsourcelines(DecoratorClass.test_no_decorator)[-1],
+            ],
+            [
+                "numpydoc.tests.test_validate.DecoratorClass.test_property",
+                getsourcelines(DecoratorClass.test_property.fget)[-1] + 1,
+            ],
+            [
+                "numpydoc.tests.test_validate.DecoratorClass.test_cached_property",
+                getsourcelines(DecoratorClass.test_cached_property.func)[-1] + 1,
+            ],
+            [
+                "numpydoc.tests.test_validate.DecoratorClass.test_three_decorators",
+                getsourcelines(DecoratorClass.test_three_decorators)[-1] + 3,
+            ],
+        ],
+    )
+    def test_source_file_def_line_with_decorators(self, decorated_obj, def_line):
+        doc = numpydoc.validate.Validator(
+            numpydoc.docscrape.get_doc_object(
+                numpydoc.validate.Validator._load_obj(decorated_obj)
+            )
+        )
+        assert doc.source_file_def_line == def_line
+
+    @pytest.mark.parametrize(
+        ["property", "file_name"],
+        [
+            [
+                "numpydoc.tests.test_validate.DecoratorClass.test_property",
+                getsourcefile(DecoratorClass.test_property.fget),
+            ],
+            [
+                "numpydoc.tests.test_validate.DecoratorClass.test_cached_property",
+                getsourcefile(DecoratorClass.test_cached_property.func),
+            ],
+        ],
+    )
+    def test_source_file_name_with_properties(self, property, file_name):
+        doc = numpydoc.validate.Validator(
+            numpydoc.docscrape.get_doc_object(
+                numpydoc.validate.Validator._load_obj(property)
+            )
+        )
+        assert doc.source_file_name == file_name
